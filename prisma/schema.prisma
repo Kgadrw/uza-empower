@@ -1,0 +1,424 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  BENEFICIARY
+  DONOR
+}
+
+enum KYCStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ProjectStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  ACTIVE
+  COMPLETED
+  SUSPENDED
+}
+
+enum FundingRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PledgeStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum TrancheStatus {
+  PENDING
+  RELEASED
+  FROZEN
+}
+
+enum TransactionType {
+  EXPENSE
+  REVENUE
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  APPROVED
+  REJECTED
+}
+
+enum TopUpStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AlertType {
+  DUPLICATE_RECEIPT
+  GEO_MISMATCH
+  SPEND_VELOCITY_SPIKE
+  SILENT_PERIOD
+}
+
+enum AlertStatus {
+  ACTIVE
+  RESOLVED
+}
+
+enum DisputeStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum NotificationType {
+  PROJECT_APPROVED
+  PROJECT_REJECTED
+  FUNDING_APPROVED
+  FUNDING_REJECTED
+  MILESTONE_APPROVED
+  TOP_UP_APPROVED
+  DISPUTE_OPENED
+  ALERT_TRIGGERED
+  PAYMENT_RECEIVED
+  SYSTEM_ALERT
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  email         String    @unique
+  password      String
+  firstName     String
+  lastName      String
+  phone         String?
+  role          UserRole  @default(BENEFICIARY)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  kyc           KYC?
+  projects      Project[]
+  pledges       Pledge[]
+  fundingRequests FundingRequest[]
+  transactions  Transaction[]
+  disputes      Dispute[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model KYC {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String    @unique @db.ObjectId
+  user          User      @relation(fields: [userId], references: [id])
+  status        KYCStatus @default(PENDING)
+  documentType  String
+  documentNumber String
+  documentUrl   String?
+  businessName String?
+  businessRegistration String?
+  address       String?
+  city          String?
+  country       String?
+  submittedAt   DateTime  @default(now())
+  reviewedAt    DateTime?
+  reviewedBy    String?   @db.ObjectId
+  rejectionReason String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("kyc")
+}
+
+model Project {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  beneficiaryId String    @db.ObjectId
+  beneficiary   User      @relation(fields: [beneficiaryId], references: [id])
+  title         String
+  description   String
+  category      String?
+  status        ProjectStatus @default(DRAFT)
+  targetAmount  Float     @default(0)
+  currentAmount Float     @default(0)
+  location      String?
+  latitude      Float?
+  longitude     Float?
+  startDate     DateTime?
+  endDate       DateTime?
+  completedAt   DateTime?
+  approvedBy    String?   @db.ObjectId
+  approvedAt    DateTime?
+  rejectionReason String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  budget        ProjectBudget?
+  fundingRequests FundingRequest[]
+  pledges       Pledge[]
+  tranches      Tranche[]
+  transactions  Transaction[]
+  milestones    Milestone[]
+  topUps        TopUpRequest[]
+  alerts        Alert[]
+  disputes      Dispute[]
+  payments      Payment[]
+  kpis          ProjectKPI?
+
+  @@map("projects")
+}
+
+model ProjectBudget {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String    @unique @db.ObjectId
+  project       Project   @relation(fields: [projectId], references: [id])
+  totalBudget   Float
+  allocatedAmount Float   @default(0)
+  spentAmount   Float     @default(0)
+  breakdown     Json?     // JSON structure for budget breakdown
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("project_budgets")
+}
+
+model ProjectKPI {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String    @unique @db.ObjectId
+  project       Project   @relation(fields: [projectId], references: [id])
+  beneficiariesReached Int @default(0)
+  jobsCreated   Int       @default(0)
+  revenueGenerated Float  @default(0)
+  impactMetrics Json?     // Additional custom metrics
+  lastUpdated   DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("project_kpis")
+}
+
+model FundingRequest {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String    @db.ObjectId
+  project       Project   @relation(fields: [projectId], references: [id])
+  beneficiaryId String    @db.ObjectId
+  beneficiary   User      @relation(fields: [beneficiaryId], references: [id])
+  amount        Float
+  purpose       String
+  status        FundingRequestStatus @default(PENDING)
+  approvedBy    String?   @db.ObjectId
+  approvedAt    DateTime?
+  rejectionReason String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("funding_requests")
+}
+
+model Pledge {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String    @db.ObjectId
+  project       Project   @relation(fields: [projectId], references: [id])
+  donorId       String    @db.ObjectId
+  donor         User      @relation(fields: [donorId], references: [id])
+  amount        Float
+  status        PledgeStatus @default(PENDING)
+  paymentId     String?   @db.ObjectId
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("pledges")
+}
+
+model Tranche {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String    @db.ObjectId
+  project       Project   @relation(fields: [projectId], references: [id])
+  amount        Float
+  status        TrancheStatus @default(PENDING)
+  releaseDate   DateTime?
+  frozenAt      DateTime?
+  frozenBy      String?   @db.ObjectId
+  releaseReason String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("tranches")
+}
+
+model Transaction {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String    @db.ObjectId
+  project       Project   @relation(fields: [projectId], references: [id])
+  userId        String    @db.ObjectId
+  user          User      @relation(fields: [userId], references: [id])
+  type          TransactionType
+  amount        Float
+  description   String
+  category      String?
+  receiptUrl    String?
+  latitude      Float?
+  longitude     Float?
+  transactionDate DateTime @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  media         TransactionMedia[]
+
+  @@map("transactions")
+}
+
+model TransactionMedia {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  transactionId String    @db.ObjectId
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  mediaUrl      String
+  mediaType     String    // image, video, document
+  uploadedAt    DateTime  @default(now())
+
+  @@map("transaction_media")
+}
+
+model Milestone {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String    @db.ObjectId
+  project       Project   @relation(fields: [projectId], references: [id])
+  title         String
+  description   String?
+  targetDate    DateTime?
+  status        MilestoneStatus @default(PENDING)
+  evidenceUrl   String?
+  approvedBy    String?   @db.ObjectId
+  approvedAt    DateTime?
+  rejectionReason String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("milestones")
+}
+
+model TopUpRequest {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String    @db.ObjectId
+  project       Project   @relation(fields: [projectId], references: [id])
+  amount        Float
+  reason        String
+  status        TopUpStatus @default(PENDING)
+  approvedBy    String?   @db.ObjectId
+  approvedAt    DateTime?
+  rejectionReason String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("top_up_requests")
+}
+
+model Alert {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String?   @db.ObjectId
+  project       Project?  @relation(fields: [projectId], references: [id])
+  type          AlertType
+  status        AlertStatus @default(ACTIVE)
+  severity      String    @default("medium") // low, medium, high, critical
+  message       String
+  metadata      Json?     // Additional alert data
+  resolvedBy    String?   @db.ObjectId
+  resolvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("alerts")
+}
+
+model Dispute {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String    @db.ObjectId
+  project       Project   @relation(fields: [projectId], references: [id])
+  raisedBy      String    @db.ObjectId
+  raisedByUser  User      @relation(fields: [raisedBy], references: [id])
+  title         String
+  description   String
+  status        DisputeStatus @default(OPEN)
+  resolvedBy    String?   @db.ObjectId
+  resolvedAt    DateTime?
+  resolution    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("disputes")
+}
+
+model Notification {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String    @db.ObjectId
+  user          User      @relation(fields: [userId], references: [id])
+  type          NotificationType
+  title         String
+  message       String
+  isRead        Boolean   @default(false)
+  metadata      Json?     // Additional notification data
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("notifications")
+}
+
+model Payment {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String?   @db.ObjectId
+  project       Project?  @relation(fields: [projectId], references: [id])
+  pledgeId      String?   @db.ObjectId
+  amount        Float
+  currency      String    @default("USD")
+  status        PaymentStatus @default(PENDING)
+  paymentMethod String    // momo, bank, card
+  transactionId String?   // External transaction ID
+  metadata      Json?     // Payment provider response
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("payments")
+}
+
+model AuditLog {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String?   @db.ObjectId
+  user          User?     @relation(fields: [userId], references: [id])
+  action        String
+  resourceType  String
+  resourceId    String?
+  metadata      Json?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+
+  @@map("audit_logs")
+}
+
