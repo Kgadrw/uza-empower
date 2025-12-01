@@ -247,6 +247,35 @@ src/
 └── server.ts        # Main server file
 ```
 
+## Deployment
+
+### Render.com
+
+The project includes a `render.yaml` configuration file for easy deployment on Render.com.
+
+**Required Environment Variables on Render:**
+- `DATABASE_URL` - MongoDB connection string
+- `JWT_SECRET` - Secret key for JWT tokens (generate a strong secret)
+- `JWT_REFRESH_SECRET` - Secret key for refresh tokens (generate a strong secret)
+- `NODE_ENV` - Set to `production`
+- `PORT` - Render automatically sets this (default: 10000)
+- `UPLOAD_DIR` - Set to `./uploads`
+- `MAX_FILE_SIZE` - File size limit in bytes (default: 10485760)
+
+**Build Process:**
+1. Render will automatically run: `npm install && npm run prisma:generate && npm run build`
+2. Then start the server with: `npm start`
+
+**Note:** Make sure your MongoDB Atlas IP whitelist includes Render's IP addresses or allows connections from anywhere (0.0.0.0/0) for the deployment to work.
+
+### Other Platforms
+
+For other platforms (Heroku, Railway, etc.), ensure:
+1. Build command runs: `npm run build` (which includes Prisma generation)
+2. Start command: `npm start`
+3. All environment variables are configured
+4. Prisma client is generated before the build completes
+
 ## License
 
 ISC
