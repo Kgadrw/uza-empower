@@ -253,6 +253,20 @@ src/
 
 The project includes a `render.yaml` configuration file for easy deployment on Render.com.
 
+**Important: Render Dashboard Settings**
+
+When setting up your service on Render, make sure to configure:
+
+1. **Root Directory**: Set to `.` (project root) - **NOT** `src/`
+   - This is critical! If Root Directory is set to `src/`, the build will fail
+   - Go to your service settings → Root Directory → Set to `.` or leave empty
+
+2. **Build Command**: `npm install && npm run prisma:generate && npm run build`
+   - This will install dependencies, generate Prisma client, and compile TypeScript
+
+3. **Start Command**: `node dist/server.js`
+   - This runs the compiled JavaScript from the dist folder
+
 **Required Environment Variables on Render:**
 - `DATABASE_URL` - MongoDB connection string
 - `JWT_SECRET` - Secret key for JWT tokens (generate a strong secret)
@@ -264,9 +278,12 @@ The project includes a `render.yaml` configuration file for easy deployment on R
 
 **Build Process:**
 1. Render will automatically run: `npm install && npm run prisma:generate && npm run build`
-2. Then start the server with: `npm start`
+2. Then start the server with: `node dist/server.js`
 
-**Note:** Make sure your MongoDB Atlas IP whitelist includes Render's IP addresses or allows connections from anywhere (0.0.0.0/0) for the deployment to work.
+**Troubleshooting:**
+- If you see `Cannot find module '/opt/render/project/src/dist/server.js'`, check that Root Directory is set to `.` (project root) in Render dashboard
+- Make sure your MongoDB Atlas IP whitelist includes Render's IP addresses or allows connections from anywhere (0.0.0.0/0)
+- Verify the build completes successfully by checking the build logs
 
 ### Other Platforms
 
