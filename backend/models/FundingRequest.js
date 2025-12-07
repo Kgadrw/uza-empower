@@ -11,6 +11,10 @@ const fundingRequestSchema = new mongoose.Schema({
     required: true
   },
   purpose: String,
+  budgetBreakdown: [{
+    label: String,
+    amount: Number
+  }],
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],

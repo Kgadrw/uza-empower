@@ -19,9 +19,11 @@ const milestoneSchema = new mongoose.Schema({
   },
   trancheAmount: Number,
   evidence: [{
-    type: String, // URLs to evidence files
     url: String,
-    uploadedAt: Date
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
   }],
   approvedBy: {
     type: mongoose.Schema.Types.ObjectId,

@@ -8,14 +8,10 @@ import {
 
 const router = express.Router();
 
-// Admin Dashboard
-router.get('/admin', authenticate, requireRole('admin'), getAdminDashboard);
+router.use(authenticate);
 
-// Donor Dashboard
-router.get('/donor', authenticate, requireRole('donor'), getDonorDashboard);
-
-// Beneficiary Dashboard
-router.get('/beneficiary', authenticate, requireRole('beneficiary'), getBeneficiaryDashboard);
+router.get('/admin', requireRole('admin'), getAdminDashboard);
+router.get('/donor', requireRole('donor', 'admin'), getDonorDashboard);
+router.get('/beneficiary', requireRole('beneficiary', 'admin'), getBeneficiaryDashboard);
 
 export default router;
-

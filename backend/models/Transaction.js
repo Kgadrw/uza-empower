@@ -22,6 +22,7 @@ const transactionSchema = new mongoose.Schema({
     default: Date.now
   },
   balance: Number,
+  proofUrl: String,
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

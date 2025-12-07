@@ -31,6 +31,19 @@ const userSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
   },
+  businessName: {
+    type: String,
+    trim: true
+  },
+  location: {
+    type: String,
+    trim: true
+  },
+  kycDocuments: [{
+    type: String,
+    url: String,
+    uploadedAt: Date
+  }],
   isActive: {
     type: Boolean,
     default: true
