@@ -1,37 +1,74 @@
-# Ignore everything
-*
+# Ignore all frontend files and root-level files
+# Only track backend/ folder
 
-# But include the backend folder
+# Ignore everything at root level
+/*
+!.gitignore
 !backend/
 
-# Ignore node_modules everywhere (including in backend)
+# Frontend specific files
+src/
+public/
+components.json
+eslint.config.mjs
+jsconfig.json
+next.config.mjs
+postcss.config.mjs
+package.json
+package-lock.json
 node_modules/
-backend/node_modules/
+scripts/
+API_ENDPOINTS_COMPARISON.md
+API_IMPLEMENTATION.md
+TEST_CREDENTIALS.md
+env.example
 
-# Ignore .env files
-.env*
-backend/.env*
+# Dependencies
+node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Ignore common system files
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
 .DS_Store
 *.pem
 
-# Ignore debug logs
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Ignore IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Env files
+.env*
+!.env.example
 
-# Ignore build artifacts
-dist/
-build/
-.next/
-out/
-coverage/
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Large video files
+*.mp4
+
+# Backend specific (allow backend folder but ignore its node_modules and .env)
+backend/node_modules/
+backend/.env
+backend/uploads/
+backend/*.log
