@@ -276,17 +276,28 @@ Make sure to set up all required environment variables in `.env`:
 - `JWT_SECRET` - Secret key for JWT tokens
 - `PORT` - Server port (default: 5000)
 - `FRONTEND_URL` - Frontend URL for CORS
+- `DEPLOYED_URL` or `PRODUCTION_URL` - Deployed API URL for Swagger documentation (e.g., `https://api.uzaempower.com/api`)
+- `API_URL` or `BACKEND_URL` - Alternative API URL configuration
 
 ## Production Deployment
 
 1. Set `NODE_ENV=production` in `.env`
 2. Use strong JWT secrets
 3. Configure proper CORS origins
-4. Set up file storage (consider cloud storage like AWS S3)
-5. Enable HTTPS
-6. Set up proper logging and monitoring
-7. Configure rate limiting
-8. Set up database backups
+4. Set `DEPLOYED_URL` or `PRODUCTION_URL` to your deployed API URL (e.g., `https://api.uzaempower.com/api`) for Swagger documentation
+5. Set up file storage (consider cloud storage like AWS S3)
+6. Enable HTTPS
+7. Set up proper logging and monitoring
+8. Configure rate limiting
+9. Set up database backups
+
+## API Documentation
+
+The API documentation is available via Swagger UI at:
+- **Development**: `http://localhost:5000/api-docs`
+- **Production**: `https://your-deployed-url.com/api-docs`
+
+The Swagger documentation automatically uses the deployed URL when `DEPLOYED_URL` or `PRODUCTION_URL` environment variable is set. In development, it defaults to localhost.
 
 ## Notes
 

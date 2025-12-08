@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger.js';
 import connectDB from './config/database.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -33,10 +35,43 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));
 
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'UZA Empower API Documentation'
+}));
+
 // Connect to database
 connectDB();
 
-// Health check
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [Health]
+ *     description: Check if the API is running and healthy
+ *     responses:
+ *       200:
+ *         description: API is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: ok
+ *                 message:
+ *                   type: string
+ *                   example: UZA Empower Backend API is running
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 uptime:
+ *                   type: number
+ *                   description: Server uptime in seconds
+ */
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -84,4 +119,5 @@ app.listen(PORT, () => {
   console.log(`🚀 UZA Empower Backend Server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
 });
