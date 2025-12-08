@@ -5,6 +5,7 @@
 /*
 !.gitignore
 !backend/
+!render.yaml
 
 # Frontend specific files
 src/
